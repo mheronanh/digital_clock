@@ -1,4 +1,5 @@
 #include <TimerOne.h>
+#include <ezButton.h>
 
 //definisikan pin data
 #define A 2
@@ -15,8 +16,19 @@
 #define C3 10
 #define C4 9
 
+//define pin button
+#define B1 A0
+#define B2 A1
+#define B3 A2
+
+//variabel global
 const int segs[7] = {A,B,C,D,E,F,G}; //array dari pin data
-int counter = 4800; //variabel waktu
+//button param
+ezButton button1(B1);
+ezButton button2(B2);
+ezButton button3(B3);
+long counter = 0; //variabel waktu
+int option = 0; //variabel opsi menu
 const byte numbers[10] = { 0b1000000, 0b1111001, 0b0100100, 0b0110000, 0b0011001, 0b0010010,
 0b0000010, 0b1111000, 0b0000000, 0b0010000 }; //array dari binary tiap representasi angka
 
@@ -26,21 +38,94 @@ void setup()
     {
         pinMode(i, OUTPUT); //inisialisasi pin output data dan selektor
     }
+    pinMode(B1, INPUT); pinMode(B2, INPUT); pinMode(B3, INPUT);
     Timer1.initialize(1000000); //inisialisasi timer interrupt 1 detik
     Timer1.attachInterrupt(main_time);
 }
 
 void loop() 
 {
-    seg_clock(counter); //menampilkan angka var counter
+    init_button();
+    time_overflow();
+    mode();
+    change_menu();
 }
 
-void seg_clock(int number) //melakukan screening
+void change_menu()
 {
-    digit4(numbers[number%10]); delay(3);
-    digit3(numbers[(number%60)/10]); delay(3); 
-    digit2(numbers[(number/60)%10]); delay(3);
+    if(button1.isPressed() == HIGH)
+    {
+        option++;
+    }
+    if(option > 3) option = 0;
+}
+
+void clock_setting()
+{
+    long new_counter=0; int hour = 0, min = 0;
+    int set_option = 0;
+    if (option == 2)
+    {
+        if ((button3.isPressed() == HIGH) && (set_option == 0))
+        {
+            hour++;
+        }
+        if ((button3.isPressed() == HIGH) && (set_option == 1))
+        {
+            min++;
+        }
+        if (hour > 23) hour = 0;
+        if (min > 59) min = 0;
+        if (button2.isPressed() == HIGH) set_option++;
+        if (set_option == 2)
+        {
+            new_counter = (hour * 3600) + (min*60);
+            counter = new_counter;
+        }
+        if (set_option > 2) set_option=0;
+        //display_setting();
+    }
+}
+
+void mode()
+{
+    switch (option)
+    {
+        case 0:
+            time_minute_second(counter);
+            break;
+        case 1:
+            time_hour(counter);
+            break;
+        case 2:
+            clock_setting();
+            break;
+    }
+}
+void init_button()
+{
+    button1.loop();
+    button2.loop();
+    button3.loop();
+}
+
+void time_overflow()
+{
+    if (counter >= 86400) counter = 0;
+}
+
+void time_minute_second(long number) //melakukan screening
+{
     digit1(numbers[(number/600)%6]); delay(3);
+    digit2(numbers[(number/60)%10]); delay(3);
+    digit3(numbers[(number%60)/10]); delay(3); 
+    digit4(numbers[number%10]); delay(3);
+}
+
+void time_hour(long number)
+{
+    digit3(numbers[number/36000]); delay(3);
+    digit4(numbers[(number/3600)%10]); delay(3);
 }
 
 void main_time()
