@@ -16,7 +16,7 @@
 #define C4 9
 
 const int segs[7] = {A,B,C,D,E,F,G}; //array dari pin data
-int counter = 0; //variabel waktu
+int counter = 4800; //variabel waktu
 const byte numbers[10] = { 0b1000000, 0b1111001, 0b0100100, 0b0110000, 0b0011001, 0b0010010,
 0b0000010, 0b1111000, 0b0000000, 0b0010000 }; //array dari binary tiap representasi angka
 
@@ -32,15 +32,15 @@ void setup()
 
 void loop() 
 {
-    seg(counter); //menampilkan angka var counter
+    seg_clock(counter); //menampilkan angka var counter
 }
 
 void seg_clock(int number) //melakukan screening
 {
-    digit4(numbers[number%10]); delay(8);
-    digit3(numbers[(number%60)/10]); delay(8); 
-    digit2(numbers[number/60]); delay(8);
-    digit1(numbers[number/600]); delay(8);
+    digit4(numbers[number%10]); delay(3);
+    digit3(numbers[(number%60)/10]); delay(3); 
+    digit2(numbers[(number/60)%10]); delay(3);
+    digit1(numbers[(number/600)%6]); delay(3);
 }
 
 void main_time()
