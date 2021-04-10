@@ -27,6 +27,7 @@
 #define LED2 A4
 #define LED3 A5
 #define LED4 0
+#define LED5 1
 
 //variabel global
 const int segs[7] = {A,B,C,D,E,F,G}; //array dari pin data
@@ -37,8 +38,10 @@ ezButton button3(B3);
 long counter = 0; //variabel waktu
 int option = 0; //variabel opsi menu
 int alarm_flag = 0; //flag untuk alarm (default = 0 untuk tidak menyala)
-int alarm_led_on = 0;
-long counter_alarm = 0; 
+int alarm_led_on = 0;//flag led alarm
+long counter_alarm = 0; //variabel waktu alarm
+long counter_stopwatch = 0;
+int stopwatch_flag = 0;
 const byte numbers[10] = { 0b1000000, 0b1111001, 0b0100100, 0b0110000, 0b0011001, 0b0010010,
 0b0000010, 0b1111000, 0b0000000, 0b0010000 }; //array dari binary tiap representasi angka
 
@@ -49,7 +52,7 @@ void setup()
         pinMode(i, OUTPUT); //inisialisasi pin output data dan selektor
     }
     pinMode(B1, INPUT); pinMode(B2, INPUT); pinMode(B3, INPUT);
-    pinMode(LED, OUTPUT); pinMode(LED1, OUTPUT); pinMode(LED2, OUTPUT); pinMode(LED3, OUTPUT); pinMode(LED4, OUTPUT);//pin output untuk LED
+    pinMode(LED, OUTPUT); pinMode(LED1, OUTPUT); pinMode(LED2, OUTPUT); pinMode(LED3, OUTPUT); pinMode(LED4, OUTPUT); pinMode(LED5, OUTPUT);//pin output untuk LED
     Timer1.initialize(1000000); //inisialisasi timer interrupt 1 detik
     Timer1.attachInterrupt(main_time);
 }
@@ -70,7 +73,28 @@ void change_menu()
     {
         option++;
     }
-    if(option > 3) option = 0;
+    if(option > 4) option = 0;
+}
+
+void stopwatch()
+{
+    if (option == 4)
+    {
+        time_minute_second(counter_stopwatch);
+        if (button3.isPressed() == HIGH)
+        {
+            if (stopwatch_flag == 0)
+            {
+                stopwatch_flag = 1;
+            } 
+            else
+            {
+                stopwatch_flag = 0;
+            }
+        }
+        if (button2.isPressed() == HIGH) counter_stopwatch = 0;
+        if (counter_stopwatch >= 3600) counter_stopwatch = 0;
+    }
 }
 
 void alarm_mode()
@@ -79,7 +103,10 @@ void alarm_mode()
     {
         alarm_led_on = 1; digitalWrite(13, HIGH);
     }
-    if ((alarm_led_on == 1) && (button1.isPressed()==HIGH)) digitalWrite(13, LOW);
+    if ((alarm_led_on == 1) && (button1.isPressed()==HIGH)) 
+    {
+        digitalWrite(13, LOW); alarm_led_on = 0;
+    }
 }
 
 void alarm_setting()
@@ -149,6 +176,9 @@ void mode()
         case 3:
             alarm_setting();
             break;
+        case 4:
+            stopwatch();
+            break;
     }
 }
 
@@ -157,17 +187,19 @@ void led_mode()
     switch (option)
     {
         case 0:
-            digitalWrite(LED1, HIGH); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); 
+            digitalWrite(LED1, HIGH); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); digitalWrite(LED5, LOW);
             break;
         case 1:
-            digitalWrite(LED1, LOW); digitalWrite(LED2, HIGH); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); 
+            digitalWrite(LED1, LOW); digitalWrite(LED2, HIGH); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); digitalWrite(LED5, LOW);
             break;
         case 2:
-            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, HIGH); digitalWrite(LED4, LOW); 
+            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, HIGH); digitalWrite(LED4, LOW); digitalWrite(LED5, LOW);
             break;
         case 3:
-            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, HIGH); 
+            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, HIGH); digitalWrite(LED5, LOW);
             break;
+        case 4:
+            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); digitalWrite(LED5, HIGH);
     }
 }
 
@@ -200,6 +232,7 @@ void time_hour(long number)
 void main_time()
 {
     counter++; //counting sebagai fungsi timer interrupt
+    if (stopwatch_flag == 1) counter_stopwatch++;
 }
 
 void digit1(byte number)
