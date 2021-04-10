@@ -21,14 +21,24 @@
 #define B2 A1
 #define B3 A2
 
+//define pin LED
+#define LED 13 //alarm
+#define LED1 A3
+#define LED2 A4
+#define LED3 A5
+#define LED4 0
+
 //variabel global
 const int segs[7] = {A,B,C,D,E,F,G}; //array dari pin data
 //button param
 ezButton button1(B1);
 ezButton button2(B2);
 ezButton button3(B3);
-long counter = 47568; //variabel waktu
+long counter = 0; //variabel waktu
 int option = 0; //variabel opsi menu
+int alarm_flag = 0; //flag untuk alarm (default = 0 untuk tidak menyala)
+int alarm_led_on = 0;
+long counter_alarm = 0; 
 const byte numbers[10] = { 0b1000000, 0b1111001, 0b0100100, 0b0110000, 0b0011001, 0b0010010,
 0b0000010, 0b1111000, 0b0000000, 0b0010000 }; //array dari binary tiap representasi angka
 
@@ -39,6 +49,7 @@ void setup()
         pinMode(i, OUTPUT); //inisialisasi pin output data dan selektor
     }
     pinMode(B1, INPUT); pinMode(B2, INPUT); pinMode(B3, INPUT);
+    pinMode(LED, OUTPUT); pinMode(LED1, OUTPUT); pinMode(LED2, OUTPUT); pinMode(LED3, OUTPUT); pinMode(LED4, OUTPUT);//pin output untuk LED
     Timer1.initialize(1000000); //inisialisasi timer interrupt 1 detik
     Timer1.attachInterrupt(main_time);
 }
@@ -48,16 +59,49 @@ void loop()
     init_button();
     time_overflow();
     mode();
+    led_mode();
     change_menu();
+    alarm_mode();
 }
 
 void change_menu()
 {
-    if(button1.isPressed() == HIGH)
+    if ((button1.isPressed() == HIGH) && (alarm_led_on == 0))
     {
         option++;
     }
-    if(option > 2) option = 0;
+    if(option > 3) option = 0;
+}
+
+void alarm_mode()
+{
+    if ((alarm_flag == 1) && (counter == counter_alarm)) 
+    {
+        alarm_led_on = 1; digitalWrite(13, HIGH);
+    }
+    if ((alarm_led_on == 1) && (button1.isPressed()==HIGH)) digitalWrite(13, LOW);
+}
+
+void alarm_setting()
+{
+    static int hour = 0, min = 0;
+    static int alarm_option = 0;
+    if (option == 3)
+    {
+        display_setting(hour, min);
+        if ((button3.isPressed() == HIGH) && (alarm_option == 0)) hour++;
+        if ((button3.isPressed() == HIGH) && (alarm_option == 1)) min++;
+        if (hour > 23) hour = 0;
+        if (min > 59) min = 0;
+        if (button2.isPressed() == HIGH) alarm_option++;
+        if (alarm_option == 2)
+        {
+            counter_alarm = (long(hour)*3600) + (min*60); //atasi bug overflow pada operasi int dengan menjadikan salah satu var long sementara (hemat memory)
+            alarm_option = 0;
+            alarm_flag = 1; //enabling alarm
+            option++;
+        }
+    }
 }
 
 void clock_setting()
@@ -101,6 +145,28 @@ void mode()
             break;
         case 2:
             clock_setting();
+            break;
+        case 3:
+            alarm_setting();
+            break;
+    }
+}
+
+void led_mode()
+{
+    switch (option)
+    {
+        case 0:
+            digitalWrite(LED1, HIGH); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); 
+            break;
+        case 1:
+            digitalWrite(LED1, LOW); digitalWrite(LED2, HIGH); digitalWrite(LED3, LOW); digitalWrite(LED4, LOW); 
+            break;
+        case 2:
+            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, HIGH); digitalWrite(LED4, LOW); 
+            break;
+        case 3:
+            digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); digitalWrite(LED3, LOW); digitalWrite(LED4, HIGH); 
             break;
     }
 }
