@@ -62,7 +62,8 @@ void change_menu()
 
 void clock_setting()
 {
-    static int hour = 0, min = 0, set_option = 0;
+    static int hour = 0, min = 0;
+    static int set_option = 0;
     if (option == 2)
     {
         display_setting(hour, min);
@@ -73,7 +74,7 @@ void clock_setting()
         if (button2.isPressed() == HIGH) set_option++;
         if (set_option == 2)
         {
-            counter = (hour*3600) + (min*60);
+            counter = (long(hour)*3600) + (min*60); //atasi bug overflow pada operasi int dengan menjadikan salah satu var long sementara (hemat memory)
             set_option = 0;
             option++;
         }
