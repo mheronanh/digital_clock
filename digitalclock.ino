@@ -27,7 +27,7 @@ const int segs[7] = {A,B,C,D,E,F,G}; //array dari pin data
 ezButton button1(B1);
 ezButton button2(B2);
 ezButton button3(B3);
-long counter = 0; //variabel waktu
+long counter = 47568; //variabel waktu
 int option = 0; //variabel opsi menu
 const byte numbers[10] = { 0b1000000, 0b1111001, 0b0100100, 0b0110000, 0b0011001, 0b0010010,
 0b0000010, 0b1111000, 0b0000000, 0b0010000 }; //array dari binary tiap representasi angka
@@ -57,34 +57,35 @@ void change_menu()
     {
         option++;
     }
-    if(option > 3) option = 0;
+    if(option > 2) option = 0;
 }
 
 void clock_setting()
 {
-    long new_counter=0; int hour = 0, min = 0;
-    int set_option = 0;
+    static int hour = 0, min = 0, set_option = 0;
     if (option == 2)
     {
-        if ((button3.isPressed() == HIGH) && (set_option == 0))
-        {
-            hour++;
-        }
-        if ((button3.isPressed() == HIGH) && (set_option == 1))
-        {
-            min++;
-        }
+        display_setting(hour, min);
+        if ((button3.isPressed() == HIGH) && (set_option == 0)) hour++;
+        if ((button3.isPressed() == HIGH) && (set_option == 1)) min++;
         if (hour > 23) hour = 0;
         if (min > 59) min = 0;
         if (button2.isPressed() == HIGH) set_option++;
         if (set_option == 2)
         {
-            new_counter = (hour * 3600) + (min*60);
-            counter = new_counter;
+            counter = (hour*3600) + (min*60);
+            set_option = 0;
+            option++;
         }
-        if (set_option > 2) set_option=0;
-        //display_setting();
     }
+}
+
+void display_setting(int hour, int min)
+{
+    digit1(numbers[hour/10]); delay(3);
+    digit2(numbers[hour%10]); delay(3);
+    digit3(numbers[min/10]); delay(3);
+    digit4(numbers[min%10]); delay(3);
 }
 
 void mode()
@@ -102,6 +103,7 @@ void mode()
             break;
     }
 }
+
 void init_button()
 {
     button1.loop();
@@ -132,6 +134,7 @@ void main_time()
 {
     counter++; //counting sebagai fungsi timer interrupt
 }
+
 void digit1(byte number)
 {
     digitalWrite(C1, HIGH);
